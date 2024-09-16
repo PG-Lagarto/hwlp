@@ -1,0 +1,1062 @@
+<?php
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///    DESARROLLADO POR WWW.RBWEB.CL / FRANCISCO RIVAS R.                                       ///
+///////////////////////////////////////////////////////////////////////////////////////////////////
+require('funciones/conexion.php');
+require('funciones/funciones.php');
+require('funciones/mantencion.php');
+
+function errorSugerencias($texto)
+{
+        $ddf = fopen('visita-sugerencias.log', 'a');
+        fwrite($ddf, "[" . date("r") . "] : $texto\r\n");
+        fclose($ddf);
+}
+
+if (!isset($_SESSION)) {
+        session_start();
+
+        if (!isset($_SESSION["idunica"])) {
+                $_SESSION["idunica"]  = GeneraId(15);
+        }
+
+
+        // sirve para resetear la variable sugerencias, si es que no llego a crear la OC, para que no se quede con el valor anterior de visitado
+        // Verificar si la variable de sesión 'last_reset' está configurada
+        if (!isset($_SESSION['last_reset'])) {
+                // Si no está configurada, establecerla con la marca de tiempo actual
+                $_SESSION['last_reset'] = time();
+        } else {
+                // Verificar si ha pasado un período de 24 horas desde la última vez que se reinició
+                if (time() - $_SESSION['last_reset'] >= 24 * 60 * 60) {
+                        // Si han pasado 24 horas, reiniciar la variable de sesión
+                        $_SESSION['last_reset'] = time();
+                        if (isset($_SESSION["sugerencia"])) {
+                                unset($_SESSION["sugerencia"]);
+                                errorSugerencias("Se elimina variable de sesion sugerencia");
+                        }
+                }
+        }
+}
+
+$despacho_gratis_etiqueta = $CONFI_ROW['precio_despacho']; //Despacho gratis sobre X valor;
+
+$eventos            = $mysqli->query("SELECT * FROM eventos WHERE id='1' LIMIT 1");
+$eventos_row        = $eventos->fetch_assoc();
+
+
+if ($eventos_row['blackfriday'] == 1) {
+        header('location:' . GetDomain() . 'blackfriday.php');
+        exit();
+}
+
+
+
+//-INFO BASICA
+$url                = "Portada";
+$pmenu                = "Portada";
+$pagina             = $url . " :: " . $CONFI_ROW['tienda_nombre'] . " - " . $CONFI_ROW['tienda_slogan'];
+
+?>
+
+<!DOCTYPE html>
+<!--[if IE 7 ]>  <html lang="es" class="isie ie7 oldie no-js"> <![endif]-->
+<!--[if IE 8 ]>  <html lang="es" class="isie ie8 oldie no-js"> <![endif]-->
+<!--[if IE 9 ]>  <html lang="es" class="isie ie9 no-js"> <![endif]-->
+<!-- Meta -->
+<html lang="es">
+
+<head>
+        <!-- Page Title Here -->
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="author" content="Rbweb.cl" />
+        <meta name="format-detection" content="telephone=no">
+
+        <!-- Favicons Icon -->
+        <link rel="icon" href="<?php echo _GetDomainCDN; ?>favicon.ico" type="image/x-icon" />
+        <link rel="shortcut icon" type="image/x-icon" href="<?php echo _GetDomainCDN; ?>favicon.png" />
+        <!-- Page Title Here -->
+        <title><?php echo $pagina; ?></title>
+        <meta name="description" content="Sedúcete Manicure Online es una empresa dedicada a la venta de productos de manicure desde el 2013.">
+        <meta name="keywords" content="Uñas acrilicas, Esmaltes Permanentes, Fresas, Pestañas Postizas, Pedicure, Polygel, Decoracion Uñas, Lifting, Nail Art, Soft Gel" />
+        <!-- Mobile Specific -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!--[if lt IE 9]>
+        <script src="<?php echo _GetDomain; ?>js/html5shiv.min.js"></script>
+        <script src="<?php echo _GetDomain; ?>js/respond.min.js"></script>
+	<![endif]-->
+
+        <!--facebook-->
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="<?php echo $pagina; ?>">
+        <meta property="og:url" content="<?php echo _GetDomain; ?>">
+        <meta property="og:image" content="<?php echo _GetDomain; ?>img/logo-seducete-1200x630.png">
+        <meta property="og:description" content="Sedúcete Manicure Online es una empresa dedicada a la venta de productos de manicure desde el 2013.">
+        <!--termino facebook-->
+
+        <!-- Stylesheets -->
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomain; ?>plugins/bootstrap/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomain; ?>plugins/fontawesome/css/font-awesome.min.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomain; ?>plugins/flaticon/flaticon.min.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomain; ?>plugins/owl-carousel/owl.carousel.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomain; ?>plugins/bootstrap-select/bootstrap-select.min.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomain; ?>plugins/magnific-popup/magnific-popup.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomain; ?>plugins/animate/animate.min.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomain; ?>plugins/scroll/scrollbar.min.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomainCDN; ?>css/style.min.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomainCDN; ?>css/skin/skin-1.min.css">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomainCDN; ?>css/templete.css">
+        <link href="<?php echo _GetDomainCDN; ?>css/simple_carousel.css" rel="stylesheet" media="all">
+        <link rel="stylesheet" type="text/css" href="<?php echo _GetDomainCDN; ?>css/animate.css">
+
+        <style>
+                .sombracompleta {
+                        background: #000;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        min-height: 100%;
+                        z-index: 999999999;
+                        opacity: 0.8;
+                        filter: alpha(opacity=80);
+                        display: none;
+                }
+
+                .popover2 {
+                        position: fixed;
+                        left: 50%;
+                        transform: translate(-50%);
+                        top: 15% !important;
+                        max-width: 600px;
+                        min-width: 320px;
+                        min-height: 320px;
+                        max-height: 600px;
+                        margin: auto auto !important;
+                        vertical-align: central;
+                        z-index: 99999999999 !important;
+                        background-color: transparent;
+                        display: none;
+                }
+
+                .closex {
+                        display: block;
+                        float: right;
+                        position: fixed;
+                        top: 10px;
+                        right: 10px;
+                        height: 20px;
+                        cursor: pointer;
+                        cursor: hand;
+                }
+
+                @media(max-width: 768px) {
+                        .smallprecio2 {
+                                line-height: 1.7;
+                                margin-top: 20px;
+                        }
+                }
+
+                .display-flex-center {
+                        display: flex;
+                        align-items: center;
+                }
+
+                .etiqueta-inferior-despacho-sin-texto {
+                        height: 25px;
+                        background-color: white;
+                        border-bottom-left-radius: 15px;
+                        border-bottom-right-radius: 15px;
+                }
+
+                .etiqueta-inferior-despacho-con-texto {
+                        height: 25px;
+                        background-color: white;
+                        border-bottom-left-radius: 15px;
+                        border-bottom-right-radius: 15px;
+                }
+        </style>
+
+        <?php
+
+        if (isset($_GET['newsletter_existe'])) {
+                echo '<script>alert("El correo ingresado ya existe en nuestros sistemas.")</script>';
+        }
+        if (isset($_GET['newsletter_ok'])) {
+                echo '<script>alert("El correo fue correctamente ingresado en nuestros sistemas.")</script>';
+        }
+
+        ?>
+
+        <!-- Google fonts -->
+        <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900|Raleway:100,200,300,400,500,600,700,800,900|Montserrat:100,200,300,400,500,600,700,800,900|Open+Sans:300,400,600,700,800|Roboto:100,300,400,500,700,900" rel="stylesheet">
+        <?php echo $CONFI_ROW['configuracion_javascript_header']; ?>
+        <?php if (isset($_SESSION["_id"])) { ?>
+                <script>
+                        var _learnq = _learnq || [];
+
+                        _learnq.push(['identify', {
+                                // Change the line below to dynamically print the user's email.
+                                '$email': '{{ <?php echo $_SESSION['_email']; ?> }}'
+                        }]);
+                </script>
+        <?php } ?>
+</head>
+<style>
+        .container_bars {
+                position: relative;
+                width: 100%;
+                display: flex;
+                height: 40px;
+                align-items: center;
+                justify-content: center;
+                /* background-color: #7652a6; */
+                background-color: #8A44C5;
+                color: #FFFFFF;
+        }
+
+        .bars {
+                position: absolute;
+                opacity: 0;
+                transition: opacity 0.5s ease-in-out;
+                margin-bottom: 0;
+                font-family: Nunito, sans-serif;
+                text-transform: uppercase;
+                font-size: 10px;
+        }
+
+        .show_bars {
+                opacity: 1;
+
+        }
+
+        @media screen and (min-width:768px) {
+                .container_bars {
+                        position: relative;
+                        width: 100%;
+                        display: flex;
+                        height: 40px;
+                        align-items: center;
+                        justify-content: space-around;
+                        /* background-color: #7652a6; */
+                        background-color: #8A44C5;
+                        color: #FFFFFF;
+                }
+
+                .bars {
+                        opacity: 1;
+                        position: relative;
+                        font-size: 12px;
+                }
+        }
+</style>
+
+<body id="bg">
+
+        <?php
+        // Busco popup en el sistema
+        $ConsultaPop            = $mysqli->query("SELECT * FROM popover WHERE id='1' AND imagen !='' LIMIT 1");
+        $ConsultaPopTotal        = $ConsultaPop->num_rows;
+
+        if ($ConsultaPopTotal > 0) {
+                $ConsultaPopRow        = $ConsultaPop->fetch_assoc();
+
+        ?>
+                <div class="sombracompleta"></div>
+                <div class="popover2" align="center">
+                        <img src="<?php echo _GetDomain; ?>deep_close.png" class="closex" />
+                        <img src="<?php echo _GetDomain . $ConsultaPopRow['imagen']; ?>" class="img-responsive" style="width:500px;" />
+                </div>
+        <?php } ?>
+
+        <div class="page-wraper">
+                <!-- header -->
+                <?php require('includes/header.php'); ?>
+                <!-- header END -->
+                <!-- Content -->
+                <div class="page-content">
+                        <!-- Mini Banner de titulos-->
+                        <?php
+                        $consultaMiniBars = $mysqli->query("SELECT * FROM mini_banner_slider");
+                        $miniBars = $consultaMiniBars->fetch_all(MYSQLI_ASSOC);
+                        if (!empty($miniBars)) { ?>
+                                <div class="container_bars">
+                                        <?php
+                                        foreach ($miniBars as  $value) {
+                                                echo '<p class="bars">' . $value['titulo'] . '</p>';
+                                        }
+                                        ?> </div>
+                        <?php
+                        }
+                        ?>
+                        <div id="simple_carousel" class="carousel simple_scale animate_text simple_carousel_wrapper" data-ride="carousel" data-interval="3000" data-pause="false">
+
+                                <?php
+
+                                //banner principal
+                                $bannerprin         = $mysqli->query('SELECT * FROM banners_index ORDER BY prioridad ASC');
+                                $bannerprint        = $bannerprin->num_rows;
+                                $counterb           = 0;
+
+                                echo '<ol class="carousel-indicators simple_carousel_indicators">';
+
+                                for ($i = 0; $i < $bannerprint; $i++) {
+
+                                        if ($i == 0) {
+                                                $classbanner = 'active';
+                                        } else {
+                                                $classbanner = '';
+                                        }
+
+                                        echo '<li data-target="#simple_carousel" data-slide-to="' . $i . '" class="' . $classbanner . '"></li>';
+                                }
+
+                                echo '</ol>';
+
+                                echo '<div class="carousel-inner" role="listbox"> ';
+
+                                while ($bannerprinr  = $bannerprin->fetch_assoc()) {
+                                        if ($counterb == 0) {
+                                                $classbanner2 = 'active';
+                                        } else {
+                                                $classbanner2 = '';
+                                        }
+                                        if ($bannerprinr["url"] != '') {
+                                                $linkprencipal = $bannerprinr["url"];
+                                        } else {
+                                                $linkprencipal = 'javascript:void(0)';
+                                        }
+                                        echo '<div class="item ' . $classbanner2 . ' ">';
+                                        echo '<a href="' . $linkprencipal . '"> ';
+                                        echo '<img src="' . _GetDomain . $bannerprinr["imagenpc"] . '"  class="visible-lg visible-md hidden-sm hidden-xs img-responsive center-block" loading="lazy">';
+                                        echo '<img src="' . _GetDomain . $bannerprinr["imagenmovil"] . '"  class="hidden-lg hidden-md visible-sm visible-xs img-responsive center-block" loading="lazy">';
+                                        echo '</a>';
+                                        echo '</div>';
+                                        $counterb++;
+                                }
+
+                                echo '</div>';
+
+                                ?>
+
+                                <a class="left carousel-control simple_carousel_control_left" href="#simple_carousel" role="button" data-slide="prev"> <span class="fa fa-angle-left simple_carousel_control_icons" aria-hidden="true"></span> <span class="sr-only">Previous</span> </a>
+                                <a class="right carousel-control simple_carousel_control_right" href="#simple_carousel" role="button" data-slide="next"> <span class="fa fa-angle-right simple_carousel_control_icons" aria-hidden="true"></span> <span class="sr-only">Next</span> </a>
+
+                        </div>
+                        <!-- inner page banner END -->
+                        <!-- Slider END -->
+                        <?php
+                        //banners 2
+                        $bannerprin2         = $mysqli->query('SELECT * FROM banners WHERE tipo=2 ORDER BY prioridad ASC');
+                        $bannerprint2        = $bannerprin2->num_rows;
+                        $counterb2           = 0;
+
+                        if ($bannerprint2 > 1) {
+
+                                echo '<div class="row no-gutter" style="margin-top: 6px;">';
+
+                                while ($bannerprinr2  = $bannerprin2->fetch_assoc()) {
+                                        if ($bannerprinr2["url"] != '') {
+                                                $link2 = $bannerprinr2["url"];
+                                        } else {
+                                                $link2 = 'javascript:void(0)';
+                                        }
+                                        echo '<div class="col-md-6 no-padding hidden-xs"><a href="' . $link2 . '"><img src="' . _GetDomain . $bannerprinr2['imagen'] . '" class="img-responsive " loading="lazy"></a></div>';
+                                }
+
+                                echo '</div>';
+                        }
+                        ?>
+
+                        <!-- Barra Precio -->
+                        <?php
+                        include('includes/barra-precio.php');
+                        ?>
+                        <!-- Fin Barra Precio -->
+                        <!-- Div 2 RetailRocket -->
+                        <div data-retailrocket-markup-block="652858f9ff0453f92c6769b9"></div>
+                        <!-- Fin Div 2 RetailRocket -->
+
+                        <!-- Productos Destacados Seducete-->
+                        <?php
+
+                        // Minimo 4 productos destacados
+                        
+                        $consultadestacados         = $mysqli->query("SELECT * FROM productos WHERE destacado=1 AND stock=1 AND activo=1 ORDER BY prioridado,nombre ");
+                        $consultadestacadostotal    = $consultadestacados->num_rows;
+
+                        if ($consultadestacadostotal >= 4) {
+                        /*echo '
+                        
+                        <!-- area -->
+                        <div class="content-area">
+                                <!-- Product -->
+                                <div class="container">
+
+                                <div class="section-head text-center">
+                                        <h2 class="heading-top text-uppercase">Productos Destacados</h2>
+                                        <div class="circle-sap bg-primary"></div>
+                                </div>
+                        
+                                <div class="row multiple-items">
+                        ';*/
+
+                        echo '
+                        <!-- area -->
+                        <hr>
+                        <div class="content-area>
+                                <!-- Product -->
+                                <div class="container">
+
+                                <div class="section-head text-center">
+                                        <h2 class="heading-top text-uppercase">Productos Destacados</h2>
+                                </div>
+                        
+                                <div class="row multiple-items">
+                        ';
+
+                        while ($consultadestacadosrow = $consultadestacados->fetch_assoc()) {
+
+                                $id_producto        = $consultadestacadosrow['id'];
+                                $categoria_producto = NombreCategoria($consultadestacadosrow['categoria']);
+                                $sku_producto       = $consultadestacadosrow['codigo'];
+                                $nombre_producto    = $consultadestacadosrow['nombre'];
+                                $precio_producto    = $consultadestacadosrow['precio'];
+                                $marca_producto     = Marca($consultadestacadosrow['marca']);
+
+                                if (isset($_SESSION['_id']) && $_SESSION['_id'] != '' && is_numeric($_SESSION['_id'])) {
+                                $precioProducto     = number_format($consultadestacadosrow['precio2'], 0, '', '.');
+                                $precioRegistro     = '';
+                                } else {
+                                $precioProducto     = number_format($consultadestacadosrow['precio'], 0, '', '.');
+                                $precioRegistro     = '<div class="smallprecio2">Precio profesionales $' . number_format($consultadestacadosrow['precio2'], 0, '', '.') . '</div>';
+                                }
+
+
+                                if ($consultadestacadosrow['prioridad'] == '2') {
+                                $precioProducto     = number_format($consultadestacadosrow['oferta'], 0, '', '.');
+                                } else {
+                                $precioProducto     = $precioProducto;
+                                }
+
+
+                                //imagen
+                                //if (file_exists($consultadestacadosrow['media'])) {
+                                //    $fotoProducto   = _GetDomainCDN . $consultadestacadosrow['media'];
+                                //} else {
+                                //   $fotoProducto   = _GetDomainCDN . 'sin-imagen.jpg';
+                                //}
+
+                                $fotoProducto   = _GetDomainCDN . $consultadestacadosrow['media'];
+
+
+                                //url
+                                $urlProducto        = _GetDomain . 'producto/' . Url($consultadestacadosrow['nombre']) . '/' . $consultadestacadosrow['id'];
+
+
+                                //puntuacion producto
+                                $consultaProdReview = "SELECT ROUND(AVG(puntuacion), 0) as prom, COUNT(1) as tot FROM review_productos WHERE id_producto = '$id_producto'";
+                                $execProdReview     = $mysqli->query($consultaProdReview);
+                                $prodReviewRow      = $execProdReview->fetch_assoc();
+                                $promReview         = $prodReviewRow['prom'];
+                                $totReview          = $prodReviewRow['tot'];
+
+
+                                $puntuacion = '<div class="mb-3">';
+                                for ($i = 0; $i < 5; $i++) {
+                                        if ($i < $promReview) {
+                                                $puntuacion .= '<i class="fa fa-star star-light mr-1 main_star text-warning star-light"></i>';
+                                        } else {
+                                                $puntuacion .= '<i class="fa fa-star-o" aria-hidden="true"></i>';
+                                        }
+                                }
+
+
+                                echo '
+                        
+                        <div class="col-md-3 col-sm-6 m-b20">
+                                <div class="p-a10">
+                                <a href="' . $urlProducto . '" data-id = "' . $id_producto . '" data-precio = "' . $precio_producto . '" data-nombre = "' . $nombre_producto . '" data-categoria = "' . $categoria_producto . '" data-marca = "' . $marca_producto . '" data-sku = "' . $sku_producto . '" class="detalle-producto">
+                                <div class="dez-thum-bx dez-img-overlay1 dez-img-effect zoom"> 
+                                        <img loading="lazy" src="' . $fotoProducto . '" alt="' . $consultadestacadosrow['nombre'] . '">
+                                </div>
+                                </a>
+                                <div class="dez-info p-t10 text-center">
+                                        <h4 class="dez-title text-uppercase m-t2 m-b2"><a href="' . $urlProducto . '">' . $consultadestacadosrow['nombre'] . '</a></h4> 
+                                        '. $puntuacion .' </div>
+                                        <h3 class="m-b2 m-t2">$' . $precioProducto . ' ' . $precioRegistro . '</h3>
+                                        <a href="' . _GetDomain . 'carrito-accion.php?idpro=' . $consultadestacadosrow['id'] . '&accion=add" class="site-button  m-t10 agregar-producto-carro" data-id = "' . $id_producto . '" data-precio = "' . $precio_producto . '" data-nombre = "' . $nombre_producto . '" data-categoria = "' . $categoria_producto . '" data-marca = "' . $marca_producto . '">Agregar al Carro</a> </div>
+                                </div>
+                        </div>  
+                        ';
+                        }
+
+                        echo '
+                        
+                                </div>
+                                </div>
+                                <!-- Product END -->
+                        </div>
+                        <hr>
+                        <!-- END --> 
+                        
+                        ';
+                        }
+
+
+                        ?>
+
+                        <div class="content-block">
+                                <?php
+
+                                //Ofertas Flash al menos 1
+                                $consultaOfertasFlash         = $mysqli->query("SELECT id, nombre, codigo, media, marca, categoria, precio, oferta, referencial, ultimas_unidades FROM productos WHERE oferta_flash= 1 AND stock=1 AND activo=1 ORDER BY oferta DESC LIMIT 8");
+                                $consultaOfertasFlashTotal    = $consultaOfertasFlash->num_rows;
+
+                                if ($consultaOfertasFlashTotal >= 1) {
+                                ?>
+
+                                        <!-- area -->
+                                        <div class="content-area">
+                                                <!-- Mejores Ofertas-->
+                                                <div class="container">
+                                                        <div class="section-head text-center">
+                                                                <h2 class="heading-top text-uppercase">Ofertas Flash</h2>
+                                                                <div class="circle-sap bg-primary"></div>
+                                                        </div>
+                                                        <div class="row multiple-items">
+                                                                <?php
+
+                                                                while ($ofertaFlashRow = $consultaOfertasFlash->fetch_assoc()) {
+
+                                                                        $id_producto        = $ofertaFlashRow['id'];
+                                                                        $sku_producto       = $ofertaFlashRow['codigo'];
+                                                                        $nombre_producto    = $ofertaFlashRow['nombre'];
+                                                                        $precio_producto    = $ofertaFlashRow['precio'];
+                                                                        $precioReferencial  = $ofertaFlashRow['referencial'];
+                                                                        $precio_oferta      = $ofertaFlashRow['oferta'];
+                                                                        $marca_producto     = Marca($ofertaFlashRow['marca']);
+                                                                        $categoria_producto = NombreCategoria($ofertaFlashRow['categoria']);
+                                                                        $fotoProducto       = _GetDomainCDN . $ofertaFlashRow['media'];
+
+                                                                        //url
+                                                                        $urlProducto        = _GetDomain . 'producto/' . Url($nombre_producto) . '/' . $id_producto;
+
+                                                                        $porcentaje = ($precio_oferta * 100) / $precioReferencial;
+                                                                        $porcDscto  = 100 - $porcentaje;
+
+                                                                        if ($precioReferencial > $precio_oferta) {
+                                                                                $precioReferencial = 'Antes: $' . Moneda($precioReferencial) . ' PG';
+                                                                        }
+
+                                                                        $precioProducto = $precio_oferta;
+                                                                        $precioProducto = '$' . Moneda($precioProducto);
+
+
+                                                                        $consultaProdReview = "SELECT ROUND(AVG(puntuacion), 0) as prom, COUNT(1) as tot FROM review_productos WHERE id_producto = '$id_producto'";
+                                                                        $execProdReview     = $mysqli->query($consultaProdReview);
+                                                                        $prodReviewRow      = $execProdReview->fetch_assoc();
+                                                                        $promReview         = $prodReviewRow['prom'];
+                                                                        $totReview          = $prodReviewRow['tot'];
+
+
+                                                                        $mensajeResenia = '<div class="mb-3">';
+                                                                        for ($i = 0; $i < 5; $i++) {
+                                                                                if ($i < $promReview) {
+                                                                                        $mensajeResenia .= '<i class="fa fa-star star-light mr-1 main_star text-warning star-light"></i>';
+                                                                                } else {
+                                                                                        $mensajeResenia .= '<i class="fa fa-star-o" aria-hidden="true"></i>';
+                                                                                }
+                                                                        }
+                                                                        $mensajeResenia .= '(' . $totReview . ')';
+                                                                        $mensajeResenia .= '</div>';
+                                                                ?>
+                                                                        <div class="col-md-3 col-sm-6 m-b20">
+                                                                                <div class="etiqueta-superior-con-texto text-center">
+                                                                                        <i class="fa fa-bolt" aria-hidden="true"></i> Oferta Flash <i class="fa fa-bolt" aria-hidden="true"></i>
+                                                                                </div>
+                                                                                <a href="<?= $urlProducto; ?>" data-id="<?= $id_producto; ?>" data-precio="<?= $precio_oferta; ?>" data-nombre="<?= $nombre_producto; ?>" data-categoria="<?= $categoria_producto; ?>" data-marca="<?= $marca_producto; ?>" data-sku="<?= $sku_producto; ?>" class="detalle-producto">
+                                                                                        <div class="dez-thum-bx dez-img-overlay1 dez-img-effect zoom">
+                                                                                                <img loading="lazy" src="<?= $fotoProducto; ?>" alt="<?= $nombre_producto; ?>">
+                                                                                        </div>
+                                                                                </a>
+                                                                                <div class="descuento text-right">
+                                                                                        <span class="porcDscto">-<?= number_format($porcDscto, 0); ?>%</span>
+                                                                                </div>
+                                                                                <div class="dez-info p-t10 text-center">
+                                                                                        <h4 class="dez-title m-t0 text-uppercase"><a href="<?= $urlProducto; ?>"><?= $nombre_producto; ?></a></h4>
+                                                                                        <div class="mb-3">
+                                                                                                <?= $mensajeResenia; ?>
+                                                                                        </div>
+                                                                                        <h3 class="m-b0">
+                                                                                                <div class="precioReferencial">
+                                                                                                        <?= $precioReferencial; ?>
+                                                                                                </div>
+                                                                                                <div class="precio">
+                                                                                                        <?= $precioProducto; ?>
+                                                                                                </div>
+
+                                                                                        </h3>
+                                                                                        <a href="<?= _GetDomain; ?>carrito-accion.php?idpro=<?= $id_producto; ?>&accion=add" class="site-button m-t10 agregar-producto-carro" data-id="<?= $id_producto; ?>" data-precio="<?= $precio_producto; ?>" data-nombre="<?= $nombre_producto; ?>" data-categoria="<?= $categoria_producto; ?>" data-marca="<?= $marca_producto; ?>">Agregar al Carro</a>
+                                                                                </div>
+                                                                        </div>
+                                                                <?php
+                                                                }
+                                                                ?>
+                                                        </div>
+                                                        <div class="text-center">
+                                                                <a href="<?= _GetDomain; ?>ofertas-flash.php" class="site-button m-t10">Ver Más Ofertas Flash</a>
+                                                        </div>
+
+                                                </div>
+                                                <!-- Mejores Ofertas END-->
+                                        </div>
+                                        <!-- area END -->
+                                <?php
+                                }
+                                ?>
+                                <hr>
+                                <?php
+                                /*
+?>
+                                <div class="content-area">
+
+                                        <?php
+                                        //Alerta en caso de agregar producto al carro
+                                        if (isset($_SESSION["resultado"]) && $_SESSION["resultado"] != '') {
+                                                echo "<div class='container'><div class='row'><div class='col-md-12'><br><br><div class=\"alert alert-success animated pulse\" id=\"hastaca\"><i class=\"fa fa-thumbs-o-up\"></i> " . $_SESSION["resultado"] . " &nbsp;&nbsp;<a href=\"" . _GetDomain . "carro.php\" class=\" pull-right\"><strong><i class=\"fa fa-shopping-bag\"></i> Ver carrito</strong></a></div></div></div></div> ";
+                                                unset($_SESSION["resultado"]);
+                                        } ?>
+
+
+                                        <h2 class="text-center">RECOMENDADOS POR CATEGORÍA</h2>
+                                        <?php //PRODUCTOS DESTACADOS -- MINIMO 4
+
+                                        $categoriaPrincipales = $mysqli->query("SELECT * FROM categorias_principales WHERE activo=1 ORDER BY prioridad");
+                                        $categoriaPrincipalestotal = $categoriaPrincipales->num_rows;
+
+                                        if ($categoriaPrincipalestotal > 0) {
+                                                while ($categoriaPrincipalesRow = $categoriaPrincipales->fetch_assoc()) {
+                                                        $idCategoriaPadre       =    $categoriaPrincipalesRow['id'];
+                                                        $nombreCategoriaPadre       = $categoriaPrincipalesRow['nombre'];
+                                                        $imgCategoriaPadre          = $categoriaPrincipalesRow['media'];
+                                                        $urlCategoriaPadre       = _GetDomain . 'categoria-primaria/' . Url($nombreCategoriaPadre) . '/' . $idCategoriaPadre;
+
+                                        ?>
+                                                        <div class="row" style="margin-left: 0px; margin-right:0px">
+
+                                                                <div class="col-xs-12 col-md-3 col-lg-3 ">
+                                                                        <img src="<?= _GetDomain .  $imgCategoriaPadre;  ?>" class="img-responsive" style="margin:0 auto;" alt="<?= $nombreCategoriaPadre; ?>">
+
+                                                                        <div class="text-center">
+                                                                                <a href="<?= $urlCategoriaPadre;  ?>" class="site-button m-t20 m-b20">Ver Más Productos de <?= $nombreCategoriaPadre; ?></a>
+                                                                        </div>
+                                                                </div>
+                                                                <div class="col-xs-12 col-md-8 col-lg-8">
+                                                                        <?php //PRODUCTOS DESTACADOS -- MINIMO 4
+
+                                                                        $skuDestacados = $mysqli->query("SELECT codigo FROM categorias_principales_destacados WHERE dependencia= '$idCategoriaPadre' ORDER BY prioridad LIMIT 4");
+                                                                        $skuDestacadosTotal = $skuDestacados->num_rows;
+
+                                                                        if ($skuDestacadosTotal >= 1) {
+                                                                        ?>
+                                                                                <div class="row multiple-items">
+                                                                                        <?php
+
+                                                                                        while ($skuDestacadosRow = $skuDestacados->fetch_assoc()) {
+                                                                                                $codigoDestacado        = $skuDestacadosRow['codigo'];
+
+
+                                                                                                $consultaProductosDestacados = $mysqli->query("SELECT * FROM productos WHERE codigo = '" . $codigoDestacado . "' LIMIT 1");
+
+                                                                                                $consultadestacadosrow = $consultaProductosDestacados->fetch_assoc();
+
+                                                                                                $id_producto        = $consultadestacadosrow['id'];
+                                                                                                $sku_producto       = $consultadestacadosrow['codigo'];
+                                                                                                $nombre_producto    = $consultadestacadosrow['nombre'];
+                                                                                                $precio_producto    = $consultadestacadosrow['precio'];
+                                                                                                $marca_producto     = Marca($consultadestacadosrow['marca']);
+                                                                                                $categoria_producto = NombreCategoria($consultadestacadosrow['categoria']);
+                                                                                                $fotoProducto       = _GetDomainCDN . $consultadestacadosrow['media'];
+
+                                                                                                //url
+                                                                                                $urlProducto        = _GetDomain . 'producto/' . Url($consultadestacadosrow['nombre']) . '/' . $consultadestacadosrow['id'];
+
+                                                                                                $precioRegistro     = '';
+                                                                                                if (isset($_SESSION['_id']) && $_SESSION['_id'] != '' && is_numeric($_SESSION['_id'])) {
+                                                                                                        $precioProducto     = number_format($consultadestacadosrow['precio2'], 0, '', '.');
+                                                                                                } else {
+                                                                                                        $precioProducto     = number_format($consultadestacadosrow['precio'], 0, '', '.');
+                                                                                                        if ($consultadestacadosrow['precio'] > $consultadestacadosrow['precio2']) {
+                                                                                                                $precioRegistro     = 'Precio profesionales $' . number_format($consultadestacadosrow['precio2'], 0, '', '.');
+                                                                                                        }
+                                                                                                }
+
+                                                                                                if ($consultadestacadosrow['prioridad'] == '2') {
+                                                                                                        $precioProducto     = number_format($consultadestacadosrow['oferta'], 0, '', '.');
+                                                                                                } else {
+                                                                                                        $precioProducto     = $precioProducto;
+                                                                                                }
+
+                                                                                                $consultaProdReview = "SELECT ROUND(AVG(puntuacion), 0) as prom, COUNT(1) as tot FROM review_productos WHERE id_producto = '$id_producto'";
+                                                                                                $execProdReview     = $mysqli->query($consultaProdReview);
+                                                                                                $prodReviewRow      = $execProdReview->fetch_assoc();
+                                                                                                $promReview         = $prodReviewRow['prom'];
+                                                                                                $totReview          = $prodReviewRow['tot'];
+
+
+                                                                                                $mensajeResenia = '<div class="mb-3">';
+                                                                                                for ($i = 0; $i < 5; $i++) {
+                                                                                                        if ($i < $promReview) {
+                                                                                                                $mensajeResenia .= '<i class="fa fa-star star-light mr-1 main_star text-warning star-light"></i>';
+                                                                                                        } else {
+                                                                                                                $mensajeResenia .= '<i class="fa fa-star-o" aria-hidden="true"></i>';
+                                                                                                        }
+                                                                                                }
+                                                                                                $mensajeResenia .= '(' . $totReview . ')';
+                                                                                                $mensajeResenia .= '</div>';
+                                                                                        ?>
+
+                                                                                                <div class="col-md-3 col-sm-6 m-b20">
+                                                                                                        <a href="<?= $urlProducto; ?>" data-id="<?= $id_producto; ?>" data-precio="<?= $precio_producto; ?>" data-nombre="<?= $nombre_producto; ?>" data-categoria="<?= $categoria_producto; ?>" data-marca="<?= $marca_producto; ?>" data-sku="<?= $sku_producto; ?>" class="detalle-producto">
+                                                                                                                <div class="dez-img-effect zoom">
+                                                                                                                        <img class="img-responsive" loading="lazy" src="<?= $fotoProducto; ?>" alt="<?= $consultadestacadosrow['nombre']; ?>">
+                                                                                                                </div>
+                                                                                                        </a>
+
+                                                                                                        <?php
+                                                                                                        $despacho_gratis_etiqueta = intval($despacho_gratis_etiqueta);
+                                                                                                        $precioProductoDespacho =  intval(str_replace('.', '', $precioProducto));
+
+                                                                                                        if ($precioProductoDespacho >= $despacho_gratis_etiqueta) {
+                                                                                                                echo '<div class="etiqueta-inferior-despacho-con-texto text-center">';
+                                                                                                                echo '<span style="font-size:12px; font-weight:900;">🚛 DESPACHO GRATIS 🚛</span>';
+                                                                                                                echo '</div>';
+                                                                                                        } else {
+                                                                                                                echo '<div class="etiqueta-inferior-despacho-sin-texto text-center">';
+                                                                                                                echo '</div>';
+                                                                                                        }
+                                                                                                        ?>
+
+                                                                                                        <div class="dez-info p-t10 text-center">
+                                                                                                                <h4 class="dez-title m-t0 text-uppercase"><a href="<?= $urlProducto; ?>"><?= $consultadestacadosrow['nombre']; ?></a></h4>
+                                                                                                                <div class="mb-3">
+                                                                                                                        <?= $mensajeResenia; ?>
+                                                                                                                </div>
+                                                                                                                <h3 class="m-b0">
+                                                                                                                        <div class="precio">
+                                                                                                                                $<?= $precioProducto; ?>
+                                                                                                                        </div>
+                                                                                                                        <div class="smallprecio2">
+                                                                                                                                <?= $precioRegistro; ?>
+                                                                                                                        </div>
+                                                                                                                </h3>
+                                                                                                                <a href="<?= _GetDomain; ?>carrito-accion.php?idpro=<?= $consultadestacadosrow['id']; ?>&accion=add" class="site-button m-t15 agregar-producto-carro" data-id="<?= $id_producto; ?>" data-precio="<?= $precio_producto; ?>" data-nombre="<?= $nombre_producto; ?>" data-categoria="<?= $categoria_producto; ?>" data-marca="<?= $marca_producto; ?>">Agregar al Carro</a>
+                                                                                                        </div>
+                                                                                                </div>
+                                                                                        <?php
+                                                                                        }
+                                                                                        ?>
+                                                                                </div>
+                                                                        <?php
+                                                                        }
+                                                                        ?>
+                                                                </div>
+                                                        </div>
+
+                                        <?php
+                                                }
+                                        }
+                                        ?>
+                                </div>
+
+                                <?php
+*/
+                                ?>
+
+                                <?php
+                                //banners 3
+                                $bannerprin3         = $mysqli->query('SELECT * FROM banners WHERE tipo=3 ORDER BY prioridad ASC');
+                                $bannerprint3        = $bannerprin3->num_rows;
+                                $counterb3           = 0;
+
+                                if ($bannerprint3 > 1) {
+
+                                        echo '<div class="row no-gutter" style="margin-top: 6px;">';
+
+                                        while ($bannerprinr3  = $bannerprin3->fetch_assoc()) {
+                                                echo '<div class="col-md-6 no-padding hidden-xs"><a href="' . $bannerprinr3['url'] . '"><img src="' . _GetDomain . $bannerprinr3['imagen'] . '" class="img-responsive" loading="lazy"></a></div>';
+                                        }
+
+                                        echo '</div>';
+                                }
+                                ?>
+
+                        </div>
+                </div>
+
+                <?php require('includes/footer.php'); ?>
+
+                <button class="scroltop fa fa-chevron-up"></button>
+        </div>
+        <!-- JavaScript  files ========================================= -->
+        <script src="<?php echo _GetDomainCDN; ?>js/combine.js"></script>
+        <script src="<?php echo _GetDomainCDN; ?>js/google_analytics.js"></script>
+
+        <script type="text/javascript" src="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+
+        <script>
+                var assetsPath = '<?php echo _GetDomain; ?>';
+
+
+
+
+
+
+
+                $(document).ready(function() {
+
+
+                        $('.slick-items-categoria').slick({
+                                dots: true,
+                                infinite: true,
+                                autoplay: true,
+                                autoplaySpeed: 1500,
+                                slidesToShow: 3,
+                                slidesToScroll: 3,
+
+                                responsive: [{
+                                                breakpoint: 1024,
+                                                settings: {
+                                                        slidesToShow: 3,
+                                                        slidesToScroll: 3,
+                                                        infinite: true,
+                                                        dots: true
+                                                }
+                                        },
+                                        {
+                                                breakpoint: 600,
+                                                settings: {
+                                                        slidesToShow: 1,
+                                                        slidesToScroll: 1
+                                                }
+                                        },
+                                        {
+                                                breakpoint: 480,
+                                                settings: {
+                                                        slidesToShow: 1,
+                                                        slidesToScroll: 1
+
+                                                }
+                                        }
+                                        // You can unslick at a given breakpoint now by adding:
+                                        // settings: "unslick"
+                                        // instead of a settings object
+                                ]
+                        });
+
+                        $('.multiple-items').slick({
+                                dots: false,
+                                prevArrow: false,
+                                nextArrow: false,
+                                infinite: true,
+                                autoplay: true,
+                                autoplaySpeed: 2500,
+                                slidesToShow: 4,
+                                slidesToScroll: 1,
+                                responsive: [{
+                                                breakpoint: 1024,
+                                                settings: {
+                                                        slidesToShow: 3,
+                                                        slidesToScroll: 3,
+                                                        infinite: true,
+                                                        dots: true
+                                                }
+                                        },
+                                        {
+                                                breakpoint: 600,
+                                                settings: {
+                                                        slidesToShow: 2,
+                                                        slidesToScroll: 2
+                                                }
+                                        },
+                                        {
+                                                breakpoint: 480,
+                                                settings: {
+                                                        slidesToShow: 2,
+                                                        slidesToScroll: 2
+                                                }
+                                        }
+                                        // You can unslick at a given breakpoint now by adding:
+                                        // settings: "unslick"
+                                        // instead of a settings object
+                                ]
+                        });
+                });
+        </script>
+        <script>
+                const bars = document.querySelectorAll(".bars");
+                let count = 0;
+
+                const showNextBar = () => {
+                        bars[count].classList.remove("show_bars");
+                        count = (count + 1) % bars.length;
+                        setTimeout(function() {
+                                bars[count].classList.add("show_bars");
+                        }, 1000);
+                }
+
+                // Mostrar el primer elemento al cargar la página
+                bars[count]?.classList.add("show_bars");
+
+                if (bars.length > 0) {
+                        setInterval(showNextBar, 6000);
+                }
+        </script>
+
+
+        <?php echo $CONFI_ROW['configuracion_javascript_footer']; ?>
+
+        <script>
+                <?php
+
+                if (isset($_GET['salir'])) {
+                        echo 'alert("Has salido del sistema.")';
+                }
+
+                if (isset($_GET['ingreso'])) {
+                        echo 'alert("Ingreso exitoso al sistema.")';
+                }
+
+                ?>
+        </script>
+
+        <script>
+                <?php if ($ConsultaPopTotal > 0) { ?>
+                        /* POPOVER EN PORTADA*/
+                        $(document).ready(function() {
+                                $('.sombracompleta').fadeIn(500, function() {
+                                        $('.popover2').show();
+                                });
+
+                                $(".closex").on('click', function() {
+                                        $('.popover2').hide();
+                                        $('.sombracompleta').fadeOut(500);
+                                });
+
+                        });
+                <?php } ?>
+        </script>
+
+        <style>
+                .tituloCyber {
+                        background-color: #7652a6;
+                        border-top: 1px solid white;
+                        padding-top: 0px;
+                }
+
+                .tituloCyber h2 {
+                        font-weight: bolder;
+                        color: white;
+                }
+
+                .etiqueta-superior-sin-texto {
+                        height: 25px;
+                        background-color: white;
+                        border-top-left-radius: 15px;
+                        border-top-right-radius: 15px;
+                }
+
+                .etiqueta-superior-con-texto {
+                        height: 25px;
+                        background-color: black;
+                        color: white;
+                        border-top-left-radius: 15px;
+                        border-top-right-radius: 15px;
+                }
+
+                .descuento {
+                        background-color: white;
+                        border-bottom-left-radius: 15px;
+                        border-bottom-right-radius: 15px;
+                        height: 35px;
+                }
+
+                .porcDscto {
+                        background-color: #ca1862;
+                        color: white;
+                        border-radius: 10px;
+                        padding-bottom: 2px;
+                        padding-left: 15px;
+                        padding-right: 15px;
+                        margin-right: 15px;
+                        font-weight: bolder;
+                }
+
+                .slick-slider h4 {
+                        height: 115px;
+                        margin-bottom: 2px;
+                        line-height: normal;
+                        font-size: 1.5em;
+                }
+
+                .slick-slider h3 {
+                        margin-top: 2px;
+                }
+
+                .precio {
+                        font-weight: normal;
+                }
+
+                .smallprecio2,
+                .precioReferencial {
+                        margin-top: 5px;
+                        height: 30px;
+                        font-size: 0.5em;
+                }
+
+                @media(min-width: 321px) {
+
+                        .slick-slider h4 {
+                                min-height: 100px;
+                                margin-bottom: 2px;
+                        }
+                }
+
+                @media(min-width: 768px) {
+
+                        .slick-slider h4 {
+                                min-height: 85px;
+                                margin-bottom: 2px;
+                        }
+                }
+
+                .barra-precio {
+                        margin-top: 5px;
+                }
+
+                @media (max-width: 768px) {
+                        .barra-precio {
+                                margin-top: 0px;
+                                height: 50px;
+                        }
+
+                        .barra-precio p {
+                                padding-top: 13px;
+                        }
+                }
+
+                @media(max-width: 768px) {
+                        .smallprecio2 {
+                                line-height: 1.7;
+                                margin-top: 20px;
+                        }
+
+
+                }
+        </style>
+
+</body>
+
+</html>
